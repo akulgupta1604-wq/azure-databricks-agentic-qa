@@ -16,6 +16,11 @@ variables:
   catalog:
     description: Unity Catalog catalog name for this environment
     default: topsecretcatalog
+  schema:
+    description: >-
+      Unity Catalog schema holding the chunks table and the Unity Gateway services. Must match
+      UC_SCHEMA in src/policypilot/config.py.
+    default: filing
   groq_api_key:
     description: >-
       Groq API key for the Unity Gateway model provider service (resources/ai_gateway.yml).

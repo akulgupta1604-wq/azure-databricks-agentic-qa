@@ -56,7 +56,7 @@ resources:
         #inference_table_config:
           #enabled: false
           #catalog_name: ${var.catalog}
-          #schema_name: filings
+          #schema_name: ${var.schema}
           #table_name_prefix: policypilot_groq
 
       # CD's service principal owns the endpoint, so grant the human admin and the App's own SP
