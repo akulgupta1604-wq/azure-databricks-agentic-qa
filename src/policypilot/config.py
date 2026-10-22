@@ -31,7 +31,7 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 UC_CATALOG = "topsecretcatalog"
 UC_SCHEMA = "filing"
 UC_CHUNKS_TABLE = f"{UC_CATALOG}.{UC_SCHEMA}.chunks"
-VECTOR_SEARCH_ENDPOINT = "aiendpoint"
+VECTOR_SEARCH_ENDPOINT = "topsecretendpoint"
 VECTOR_SEARCH_INDEX = f"{UC_CATALOG}.{UC_SCHEMA}.topsecretindex"
 
 # Unity Gateway model service routing to Groq (resources/ai_gateway.yml) — the deployed LLM
