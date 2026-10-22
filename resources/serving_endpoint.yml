@@ -1,0 +1,68 @@
+# Unity AI Gateway External Model serving endpoint that proxies to Groq's OpenAI-compatible API.
+#
+# REFERENCE ONLY — NOT included in databricks.yml. The App's real LLM path is the Unity Gateway
+# provider/model service pair in resources/ai_gateway.yml (see docs/DEPLOYMENT_GUIDE.md 5.2b).
+# This is the serving-endpoint alternative, kept for comparison. To try it, add
+# `- resources/serving_endpoint.yml` to `include:` in databricks.yml.
+#
+# ⚠️ Constraint (DEPLOYMENT_GUIDE error #17): `external_model.name` only allows letters, digits,
+# `-`, `_`, `.` and `:`, and it's sent upstream as Groq's `"model"`. So the app's real model,
+# openai/gpt-oss-120b, can't be used here. Groq's slash-free IDs (llama-3.3-70b-versatile,
+# llama-3.1-8b-instant) are listed as shut down on 2026-08-16 for free/developer tiers
+# (console.groq.com/docs/deprecations). Check `client.models.list()` before deploying.
+#
+# The Groq key comes in the same way as in ai_gateway.yml: cd.yml reads it from Azure Key Vault
+# and passes it as BUNDLE_VAR_groq_api_key, so it never lands in source control.
+
+resources:
+  model_serving_endpoints:
+    policypilot_groq_gateway:
+      name: policypilot-groq-gateway
+      config:
+        served_entities:
+          - name: groq-oss-120b
+            external_model:
+              name: openai/gpt-oss-120b
+              provider: openai
+              task: llm/v1/chat
+              openai_config:
+                # The openai provider appends /chat/completions itself, so give it the base URL
+                # (unlike ai_gateway.yml's CUSTOM provider, which needs the full path).
+                openai_api_base: https://api.groq.com/openai/v1
+                openai_api_key: "{{secrets/topsecretScope/groq-api-key}}"
+        #traffic_config:
+          #routes:
+            #- served_model_name: groq-llama
+              #traffic_percentage: 100
+
+      # Unity AI Gateway features on the endpoint. Unlike model-service guardrails (Part 7,
+      # UI-only), these are managed by the bundle and re-applied on every deploy.
+      ai_gateway:
+        usage_tracking_config:
+          enabled: true
+        #rate_limits:
+          #- calls: 60
+            #key: user
+            #renewal_period: minute
+        guardrails:
+          input:
+            pii:
+              behavior: BLOCK
+          output:
+            pii:
+              behavior: BLOCK
+        # Inference tables log every request/response to UC. Needs CREATE TABLE on the schema
+        # for the deploying SP (on top of the Part 4.5 grants), so it's off by default.
+        #inference_table_config:
+          #enabled: false
+          #catalog_name: ${var.catalog}
+          #schema_name: filings
+          #table_name_prefix: policypilot_groq
+
+      # CD's service principal owns the endpoint, so grant the human admin and the App's own SP
+      # explicitly — same pattern as the grants in ai_gateway.yml.
+      #permissions:
+        #- user_name: ${var.admin_user}
+          #level: CAN_MANAGE
+        #- service_principal_name: ${resources.apps.policypilot_app.service_principal_client_id}
+          #level: CAN_QUERY
